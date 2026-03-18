@@ -40,7 +40,7 @@ public class ServerReceiver implements Runnable {
             AudioFileHandler.receiveAudio(dis, fileName);
             
             String transcript = AudioFileHandler.recognizeSpeech(fileName);
-            gui.logEvent("AI Heard: '" + transcript + "'");
+            gui.logEvent("[T=" + clock.getTime() + "] AI Heard: '" + transcript + "'");
 
             String botResponse = generateResponse(transcript);
             
@@ -48,7 +48,7 @@ public class ServerReceiver implements Runnable {
             dos.writeUTF(botResponse);
             dos.writeInt(clock.getTime());
             
-            gui.logEvent("AI Replied: " + botResponse);
+            gui.logEvent("[T=" + clock.getTime() + "] AI Replied: " + botResponse);
             AudioFileHandler.playAudio(fileName);
 
         } catch (Exception e) { e.printStackTrace(); }
@@ -117,4 +117,3 @@ public class ServerReceiver implements Runnable {
 }
 
 }
-
