@@ -32,7 +32,7 @@ public class ServerReceiver implements Runnable {
 
             String fileName = dis.readUTF();
             int senderTime = dis.readInt();
-            dis.readUTF(); 
+            String clientMessage = dis.readUTF();
             
             clock.receiveAction(senderTime);
             gui.updateClock();
@@ -40,7 +40,7 @@ public class ServerReceiver implements Runnable {
             AudioFileHandler.receiveAudio(dis, fileName);
             
             String transcript = AudioFileHandler.recognizeSpeech(fileName);
-            gui.logEvent("[T=" + clock.getTime() + "] AI Heard: '" + transcript + "'");
+            gui.logEvent("[T=" + clock.getTime() + "] " + clientMessage + " | Heard: '" + transcript + "'");
 
             String botResponse = generateResponse(transcript);
             
