@@ -9,7 +9,6 @@ public class ServerGUI {
     JTextArea logArea;
     JLabel clockLabel;
     private String lastFileName = ""; 
-
     LamportClock clock = new LamportClock();
 
     public ServerGUI() {
@@ -33,30 +32,16 @@ public class ServerGUI {
         frame.setVisible(true);
 
         playButton.addActionListener(e -> {
-            if (lastFileName != null && !lastFileName.isEmpty()) {
-                AudioFileHandler.playAudio(lastFileName);
-            } else {
-                logArea.append("No file to play yet.\n");
-            }
+            if (!lastFileName.isEmpty()) AudioFileHandler.playAudio(lastFileName);
         });
 
         new Thread(new ServerReceiver(this, clock)).start();
     }
 
-    public void setLastFileName(String fileName) {
-        this.lastFileName = fileName;
-    }
+    public void setLastFileName(String fileName) { this.lastFileName = fileName; }
+    public void updateClock() { clockLabel.setText("Logical Clock: " + clock.getTime()); }
+    public void logEvent(String event) { logArea.append(event + "\n"); }
 
-    public void updateClock() {
-        clockLabel.setText("Logical Clock: " + clock.getTime());
-    }
-
-    public void logEvent(String event) {
-        logArea.append(event + "\n");
-    }
-
-    public static void main(String[] args) {
-        new ServerGUI();
-    }
+    public static void main(String[] args) { new ServerGUI(); }
 }
 
