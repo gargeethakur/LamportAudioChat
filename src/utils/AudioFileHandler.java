@@ -1,9 +1,47 @@
 package utils;
 
+import org.vosk.Model;
+import org.vosk.Recognizer;
 import java.io.*;
 import javax.sound.sampled.*;
 
 public class AudioFileHandler {
+    private static Model model;
+
+    static {
+        try {
+            // Ensure the folder 'model' is in your project root
+            model = new Model("model"); 
+        } catch (Exception e) {
+            System.err.println("Vosk Model not found! Speech recognition will fail.");
+        }
+    }
+
+    public static String recognizeSpeech(String fileName) {
+        if (model == null) return "Error: Speech Model not loaded.";
+
+        try (AudioInputStream ais = AudioSystem.getAudioInputStream(new File("received_audio/" + fileName))) {
+            // Vosk works best with 16kHz, Mono, PCM_SIGNED
+            AudioFormat format = new AudioFormat(16000, 16, 1, true, false);
+            AudioInputStream resampled = AudioSystem.getAudioInputStream(format, ais);
+            
+            Recognizer recognizer = new Recognizer(model, 16000);
+            byte[] buffer = new byte[4096];
+            int nbytes;
+
+            while ((nbytes = resampled.read(buffer)) >= 0) {
+                recognizer.acceptWaveForm(buffer, nbytes); 
+            }
+            
+            String result = recognizer.getFinalResult();
+            if (result.contains("text\" : \"")) {
+                return result.substring(result.indexOf("text\" : \"") + 9, result.lastIndexOf("\""));
+            }
+            return "";
+        } catch (Exception e) {
+            return "Speech Error: " + e.getMessage();
+        }
+    }
 
     public static void sendAudio(File file, DataOutputStream dos) throws IOException {
         FileInputStream fis = new FileInputStream(file);
@@ -18,9 +56,7 @@ public class AudioFileHandler {
 
     public static void receiveAudio(DataInputStream dis, String fileName) throws IOException {
         File folder = new File("received_audio");
-        if(!folder.exists()) {
-            folder.mkdir();
-        }
+        if(!folder.exists()) folder.mkdir();
         FileOutputStream fos = new FileOutputStream("received_audio/" + fileName);
         long fileSize = dis.readLong();
         byte[] buffer = new byte[4096];
@@ -37,44 +73,14 @@ public class AudioFileHandler {
         new Thread(() -> {
             try {
                 File file = new File("received_audio/" + fileName);
-                if (!file.exists()) {
-                    System.err.println("FILE MISSING: " + file.getAbsolutePath());
-                    return;
-                }
-
                 AudioInputStream in = AudioSystem.getAudioInputStream(file);
-                AudioFormat baseFormat = in.getFormat();
-                
-                // Force convert to a standard format Java likes (PCM_SIGNED) 
-                // This fixes the "playing but no sound" issue for many WAV types
-                AudioFormat targetFormat = new AudioFormat(
-                    AudioFormat.Encoding.PCM_SIGNED, 
-                    baseFormat.getSampleRate(), 16, 
-                    baseFormat.getChannels(), 
-                    baseFormat.getChannels() * 2, 
-                    baseFormat.getSampleRate(), false);
-
-                AudioInputStream din = AudioSystem.getAudioInputStream(targetFormat, in);
-                DataLine.Info info = new DataLine.Info(SourceDataLine.class, targetFormat);
-                SourceDataLine line = (SourceDataLine) AudioSystem.getLine(info);
-
-                if (line != null) {
-                    line.open(targetFormat);
-                    line.start();
-                    byte[] data = new byte[4096];
-                    int nBytesRead;
-                    while ((nBytesRead = din.read(data, 0, data.length)) != -1) {
-                        line.write(data, 0, nBytesRead);
-                    }
-                    line.drain();
-                    line.stop();
-                    line.close();
-                    din.close();
-                }
-            } catch (Exception e) {
-                System.err.println("HARDWARE ERROR: Could not link to speakers.");
-                e.printStackTrace();
-            }
+                SourceDataLine line = AudioSystem.getSourceDataLine(in.getFormat());
+                line.open(); line.start();
+                byte[] data = new byte[4096];
+                int nBytesRead;
+                while ((nBytesRead = in.read(data, 0, data.length)) != -1) line.write(data, 0, nBytesRead);
+                line.drain(); line.stop(); line.close();
+            } catch (Exception e) { e.printStackTrace(); }
         }).start();
     }
 }
