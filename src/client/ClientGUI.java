@@ -7,11 +7,12 @@ import lamport.LamportClock;
 public class ClientGUI {
     private static LamportClock clock = new LamportClock();
     private static JTextArea log = new JTextArea();
+    private static JLabel clockLabel = new JLabel("Logical Clock: 0");
 
     public static void main(String[] args) {
         JFrame frame = new JFrame("Lamport Chat Client");
 
-        JTextField inputField = new JTextField(" ");
+        JTextField inputField = new JTextField("Recognize the instrument...");
         JButton selectButton = new JButton("Select Audio");
         JButton sendButton = new JButton("Send to Server");
         JScrollPane scroll = new JScrollPane(log);
@@ -19,10 +20,14 @@ public class ClientGUI {
         inputField.setBounds(50, 20, 320, 30);
         selectButton.setBounds(50, 60, 150, 30);
         sendButton.setBounds(220, 60, 150, 30);
-        scroll.setBounds(50, 110, 320, 230);
+        clockLabel.setBounds(50, 100, 320, 30);
+        scroll.setBounds(50, 140, 320, 200);
 
-        frame.add(inputField); frame.add(selectButton);
-        frame.add(sendButton); frame.add(scroll);
+        frame.add(inputField);
+        frame.add(selectButton);
+        frame.add(sendButton);
+        frame.add(clockLabel);
+        frame.add(scroll);
 
         frame.setSize(440, 420);
         frame.setLayout(null);
@@ -45,11 +50,17 @@ public class ClientGUI {
                 return;
             }
             String userMsg = inputField.getText();
-            log.append("You: " + userMsg + "\n");
             
-            // This now waits for a response from the server
+            // Show clock before sending
+            clock.tick();
+            clockLabel.setText("Logical Clock: " + clock.getTime() + " [Sending...]");
+            log.append("You [T=" + clock.getTime() + "]: " + userMsg + "\n");
+
             String response = ClientSender.sendRequest(selectedFile[0], userMsg, clock);
-            log.append("Server: " + response + "\n");
+            
+            // Show clock after receiving response
+            clockLabel.setText("Logical Clock: " + clock.getTime() + " [Received]");
+            log.append("Server [T=" + clock.getTime() + "]: " + response + "\n");
             
             log.append("----------------------------\n");
         });
