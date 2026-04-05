@@ -1,0 +1,9 @@
+{
+    "java.project.sourcePaths": [
+        "src"
+    ],
+    "java.project.referencedLibraries": [
+        "lib/jna-5.7.0.jar",
+        "lib/vosk-0.3.45.jar"
+    ]
+}
