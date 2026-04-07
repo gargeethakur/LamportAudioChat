@@ -15,109 +15,121 @@ public class ServerGUI {
     private String lastFileName = "";
     LamportClock clock = new LamportClock();
 
-    // Colors
-    Color bgColor = new Color(245, 247, 250);
-    Color primaryBlue = new Color(37, 99, 235);
-    Color lightBlue = new Color(219, 234, 254);
-    Color white = Color.WHITE;
-    Color textGray = new Color(75, 85, 99);
-    Color borderGray = new Color(209, 213, 219);
-    Color greenColor = new Color(34, 197, 94);
+    // Modern Color Palette
+    private static final Color BG_COLOR = new Color(240, 242, 245);
+    private static final Color CARD_BG = Color.WHITE;
+    private static final Color ACCENT_BLUE = new Color(30, 64, 175); // Deeper blue for Server
+    private static final Color TEXT_DARK = new Color(31, 41, 55);
+    private static final Color TEXT_LIGHT = new Color(107, 114, 128);
+    private static final Color SUCCESS_GREEN = new Color(34, 197, 94);
+    private static final Color BORDER_COLOR = new Color(229, 231, 235);
 
     public ServerGUI() {
         int port = Integer.parseInt(System.getProperty("port", "5001"));
 
-        frame = new JFrame("Voice Chat Server — Port " + port);
-        frame.setSize(460, 520);
+        frame = new JFrame("Admin Console — Port " + port);
+        frame.setSize(460, 550);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setLayout(new BorderLayout());
-        frame.getContentPane().setBackground(bgColor);
+        frame.getContentPane().setBackground(BG_COLOR);
+        frame.setLayout(new BorderLayout(0, 0));
 
-        // ── HEADER ──
-        JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(new Color(30, 64, 175));
-        headerPanel.setBorder(new EmptyBorder(14, 20, 14, 20));
+        // ── MODERN HEADER ──
+        JPanel header = new JPanel(new BorderLayout());
+        header.setBackground(CARD_BG);
+        header.setBorder(new CompoundBorder(
+            new MatteBorder(0, 0, 1, 0, BORDER_COLOR),
+            new EmptyBorder(15, 20, 15, 20)
+        ));
 
-        JLabel titleLabel = new JLabel("Voice Chat Server");
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
-        titleLabel.setForeground(white);
+        JLabel title = new JLabel("Voice Chat Server");
+        title.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        title.setForeground(ACCENT_BLUE);
 
-        portLabel = new JLabel("Port: " + port);
-        portLabel.setFont(new Font("Arial", Font.PLAIN, 13));
-        portLabel.setForeground(lightBlue);
+        portLabel = new JLabel("PORT " + port);
+        portLabel.setFont(new Font("Monospaced", Font.BOLD, 13));
+        portLabel.setForeground(TEXT_LIGHT);
 
-        headerPanel.add(titleLabel, BorderLayout.WEST);
-        headerPanel.add(portLabel, BorderLayout.EAST);
+        header.add(title, BorderLayout.WEST);
+        header.add(portLabel, BorderLayout.EAST);
 
-        // ── STATUS BAR ──
-        JPanel statusBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 16, 8));
-        statusBar.setBackground(lightBlue);
+        // ── STATUS & CLOCK BAR ──
+        JPanel statusBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 10));
+        statusBar.setOpaque(false);
 
-        statusLabel = new JLabel("  Online  ");
-        statusLabel.setFont(new Font("Arial", Font.BOLD, 12));
-        statusLabel.setForeground(white);
-        statusLabel.setOpaque(true);
-        statusLabel.setBackground(greenColor);
-        statusLabel.setBorder(new EmptyBorder(4, 10, 4, 10));
+        statusLabel = new JLabel(" ● Server Online ");
+        statusLabel.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        statusLabel.setForeground(SUCCESS_GREEN);
 
         clockLabel = new JLabel("Logical Clock: T=0");
-        clockLabel.setFont(new Font("Arial", Font.BOLD, 13));
-        clockLabel.setForeground(primaryBlue);
+        clockLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        clockLabel.setForeground(TEXT_DARK);
 
         statusBar.add(statusLabel);
+        statusBar.add(new JLabel("|")); // Separator
         statusBar.add(clockLabel);
 
-        // ── LOG AREA ──
+        JPanel topContainer = new JPanel(new BorderLayout());
+        topContainer.setOpaque(false);
+        topContainer.add(header, BorderLayout.NORTH);
+        topContainer.add(statusBar, BorderLayout.CENTER);
+
+        // ── LOG AREA (CLEAN WHITE) ──
         logArea = new JTextArea();
         logArea.setEditable(false);
-        logArea.setFont(new Font("Arial", Font.PLAIN, 13));
-        logArea.setBackground(white);
-        logArea.setForeground(textGray);
+        logArea.setFont(new Font("Consolas", Font.PLAIN, 12)); // Technical font for logs
+        logArea.setBackground(CARD_BG);
+        logArea.setForeground(TEXT_DARK);
         logArea.setLineWrap(true);
         logArea.setWrapStyleWord(true);
-        logArea.setBorder(new EmptyBorder(10, 12, 10, 12));
-        logArea.setText("Server started on port " + port + ". Waiting for clients...\n\n");
+        logArea.setMargin(new Insets(10, 15, 10, 15));
+        logArea.setText("System: Server initialized. Waiting for incoming data...\n\n");
 
         JScrollPane scrollPane = new JScrollPane(logArea);
-        scrollPane.setBorder(new MatteBorder(1, 0, 1, 0, borderGray));
+        scrollPane.setBorder(new MatteBorder(1, 0, 1, 0, BORDER_COLOR));
 
-        // ── BOTTOM ──
-        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 12));
-        bottomPanel.setBackground(bgColor);
+        // ── ACTION PANEL ──
+        JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 15));
+        actionPanel.setBackground(CARD_BG);
+        actionPanel.setBorder(new EmptyBorder(5, 0, 5, 0));
 
-        JButton playButton = new JButton("Play Last Received Audio");
-        playButton.setFont(new Font("Arial", Font.BOLD, 13));
-        playButton.setForeground(primaryBlue);
-        playButton.setBackground(white);
-        playButton.setOpaque(true);
-        playButton.setBorder(new CompoundBorder(
-            new LineBorder(primaryBlue, 1, true),
-            new EmptyBorder(10, 24, 10, 24)
-        ));
-        playButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        playButton.setFocusPainted(false);
+        JButton playButton = new JButton("Play Last Recording");
+        styleServerButton(playButton, ACCENT_BLUE);
 
-        bottomPanel.add(playButton);
+        actionPanel.add(playButton);
 
         // ── ASSEMBLE ──
-        JPanel centerWrapper = new JPanel(new BorderLayout());
-        centerWrapper.add(statusBar, BorderLayout.NORTH);
-        centerWrapper.add(scrollPane, BorderLayout.CENTER);
-        centerWrapper.setBackground(bgColor);
+        frame.add(topContainer, BorderLayout.NORTH);
+        frame.add(scrollPane, BorderLayout.CENTER);
+        frame.add(actionPanel, BorderLayout.SOUTH);
 
-        frame.add(headerPanel, BorderLayout.NORTH);
-        frame.add(centerWrapper, BorderLayout.CENTER);
-        frame.add(bottomPanel, BorderLayout.SOUTH);
+        // ── LOGIC INTEGRATION ──
+        playButton.addActionListener(e -> {
+            if (!lastFileName.isEmpty()) {
+                AudioFileHandler.playAudio(lastFileName);
+            } else {
+                logEvent("System: No audio received yet.");
+            }
+        });
+
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
 
-        playButton.addActionListener(e -> {
-            if (!lastFileName.isEmpty()) AudioFileHandler.playAudio(lastFileName);
-        });
-
+        // Start Receiver
         new Thread(new ServerReceiver(this, clock)).start();
     }
 
+    private void styleServerButton(JButton btn, Color theme) {
+        btn.setFocusPainted(false);
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        btn.setForeground(Color.WHITE);
+        btn.setBackground(theme);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.setBorder(new EmptyBorder(10, 25, 10, 25));
+        btn.setOpaque(true);
+        btn.setBorderPainted(false);
+    }
+
+    // Methods for ServerReceiver to interact with GUI
     public void setLastFileName(String fileName) { this.lastFileName = fileName; }
 
     public void updateClock() {
